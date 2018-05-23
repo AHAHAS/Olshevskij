@@ -1,0 +1,192 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Xml.Serialization;
+using System.Xml;
+
+namespace Kursach
+{
+    [Serializable]
+    public partial class Form1 : Form
+    {
+        MainWorker worker = new MainWorker();
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void MainField_TextChanged(object sender, EventArgs e)
+        {
+            worker.code = MainField.Text;
+        }
+
+        private void GenerateButton_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(worker.code);
+        }
+
+        private void BlockLength_TextChanged(object sender, EventArgs e)
+        {
+            worker.block_lenght = Convert.ToInt32(BlockLength.Text);
+        }
+
+        private void VerticalDistanse_TextChanged(object sender, EventArgs e)
+        {
+            worker.vertical_distance = Convert.ToInt32(VerticalDistanse.Text);
+        }
+
+        private void BlockHight_TextChanged(object sender, EventArgs e)
+        {
+            worker.block_hight = Convert.ToInt32(BlockHight.Text);
+        }
+
+        private void Save_asButton_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+
+            saveFileDialog1.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
+            saveFileDialog1.FilterIndex = 2;
+            saveFileDialog1.RestoreDirectory = true;
+
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                XmlSerializer xmlSerializer = new XmlSerializer(typeof(MainWorker));
+                using (Stream fStream = new FileStream(saveFileDialog1.FileName, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    xmlSerializer.Serialize(fStream, worker);
+                }
+            }
+        }
+
+        private void Open_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            openFileDialog1.Filter = "txt files (*.txt)|*.txt|xml files (*.xml)|*.xml";
+            openFileDialog1.FilterIndex = 2;
+            openFileDialog1.RestoreDirectory = true;
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+               string extension = Path.GetExtension(openFileDialog1.FileName);
+                if (extension == ".xml")
+                {
+                    try
+                    {
+                        XmlSerializer serializer = new XmlSerializer(typeof(MainWorker));
+                        FileStream fs = File.Open(openFileDialog1.FileName, FileMode.Open);
+                        XmlReader reader = XmlReader.Create(fs);
+                        MainWorker temp;
+                        temp = (MainWorker)serializer.Deserialize(reader);
+                        fs.Close();
+                        worker = temp;
+                        MainField.Text = worker.code;
+                        BlockHight.Text = Convert.ToString(worker.block_hight);
+                        BlockLength.Text = Convert.ToString(worker.block_lenght);
+                        VerticalDistanse.Text = Convert.ToString(worker.vertical_distance);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                    }
+                }
+                else if (extension == ".txt")
+                {
+                    try
+                    {
+                        StreamReader stream = new StreamReader(openFileDialog1.FileName, Encoding.Default);
+                        string str = stream.ReadToEnd();
+                        MainField.Text = str;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                    }
+                }
+            }
+        }
+
+        private void axDrawingControl1_DocumentCreated(object sender, AxMicrosoft.Office.Interop.VisOcx.EVisOcx_DocumentCreatedEvent e)
+        {
+
+        }
+
+        private void Form1_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.All;
+        }
+
+        private void Form1_DragDrop(object sender, DragEventArgs e)
+        {
+          string[] files  =  (string[])e.Data.GetData(DataFormats.FileDrop, false);
+            string extension;
+            foreach (string file in files)
+            {
+                extension = Path.GetExtension(file);
+                if (extension == ".xml")
+                {
+                    try
+                    {
+                        XmlSerializer serializer = new XmlSerializer(typeof(MainWorker));
+                        FileStream fs = File.Open(file, FileMode.Open);
+                        XmlReader reader = XmlReader.Create(fs);
+                        MainWorker temp;
+                        temp = (MainWorker)serializer.Deserialize(reader);
+                        fs.Close();
+                        worker = temp;
+                        MainField.Text = worker.code;
+                        BlockHight.Text = Convert.ToString(worker.block_hight);
+                        BlockLength.Text = Convert.ToString(worker.block_lenght);
+                        VerticalDistanse.Text = Convert.ToString(worker.vertical_distance);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                    }
+                }
+                else if(extension == ".txt")
+                {
+                    try
+                    {
+                        StreamReader stream = new StreamReader(file, Encoding.Default);
+                        string str = stream.ReadToEnd();
+                        MainField.Text = str;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                    }
+                }
+            }
+
+        }
+    }
+    public class MainWorker
+    {
+        public string code { get; set; }
+        public int block_hight { get; set; }
+        public int block_lenght { get; set; }
+        public int vertical_distance { get; set; }
+
+        public MainWorker()
+        {
+
+        }
+    }
+}
